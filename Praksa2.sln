@@ -5,6 +5,10 @@ VisualStudioVersion = 17.10.35013.160
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Praksa2", "Praksa2\Praksa2.csproj", "{FEADE519-B497-49C5-AE14-B3E3261FFA2B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccessLayer", "DataAccessLayer\DataAccessLayer.csproj", "{B2B0C54C-CCFC-48A1-A2DE-37AF12231092}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BusinessLogicLayer", "BusinessLogicLayer\BusinessLogicLayer.csproj", "{46248E92-22B7-4098-8F84-0CDEAB0C738B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{FEADE519-B497-49C5-AE14-B3E3261FFA2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FEADE519-B497-49C5-AE14-B3E3261FFA2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FEADE519-B497-49C5-AE14-B3E3261FFA2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2B0C54C-CCFC-48A1-A2DE-37AF12231092}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2B0C54C-CCFC-48A1-A2DE-37AF12231092}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2B0C54C-CCFC-48A1-A2DE-37AF12231092}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2B0C54C-CCFC-48A1-A2DE-37AF12231092}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46248E92-22B7-4098-8F84-0CDEAB0C738B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46248E92-22B7-4098-8F84-0CDEAB0C738B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46248E92-22B7-4098-8F84-0CDEAB0C738B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46248E92-22B7-4098-8F84-0CDEAB0C738B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

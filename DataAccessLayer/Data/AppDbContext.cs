@@ -1,5 +1,6 @@
 ﻿using Praksa2.Models;
 using Microsoft.EntityFrameworkCore;
+using DataAccessLayer.Models;
 
 namespace Praksa2.Data
 {
@@ -10,5 +11,6 @@ namespace Praksa2.Data
         }
 
         public DbSet<Products> Products { get; set; }
+        public DbSet<User> Users { get; set; }
     }
 }

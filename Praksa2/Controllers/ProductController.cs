@@ -10,6 +10,8 @@ using FluentValidation;
 using Praksa2.Services;
 using Microsoft.AspNetCore.Authorization;
 using BusinessLogicLayer.Dtos;
+using DataAccessLayer.Models;
+using Microsoft.Extensions.Options;
 
 namespace Praksa2.Controllers
 {
@@ -19,10 +21,12 @@ namespace Praksa2.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductServices productServices;
-      
+     
+
         public ProductController(IProductServices productServices)
         {
             this.productServices = productServices;
+           
         }
         private int GetUserId()
         {
@@ -42,15 +46,32 @@ namespace Praksa2.Controllers
                 throw new Exception("Invalid UserID value");
             }
         }
+        private string GetUserName()
+        {
+            var claims = User.Claims.ToList();
+            var usernameClaim = claims.FirstOrDefault(c => c.Type == "Username");
 
+            if (usernameClaim == null)
+            {
+                throw new Exception("Username claim not found");
+            }
 
-        [HttpGet("user-products")]
+            return usernameClaim.Value;
+        }
+
+        [HttpGet]
         public IActionResult GetUserProducts()
         {
-            try { 
-            var userId = GetUserId(); 
-            var products = productServices.GetUserProducts(userId);
-            return Ok(products);}
+            try
+            {
+                var userId = GetUserId();
+                var products = productServices.GetUserProducts(userId);
+                if (products == null || !products.Any())
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Your products do not exist.");
+                }
+                return Ok(products);
+            }
             catch (Exception ex)
             {
 
@@ -58,7 +79,8 @@ namespace Praksa2.Controllers
             }
         }
 
-       
+
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Products>> Get(int id)
@@ -66,7 +88,7 @@ namespace Praksa2.Controllers
             try
             {
                 var userId = GetUserId();
-                var product = await productServices.GetProductById(id,userId);
+                var product = await productServices.GetProductById(id, userId);
                 if (product == null)
                 {
                     return NotFound();
@@ -75,7 +97,7 @@ namespace Praksa2.Controllers
             }
             catch (Exception ex)
             {
-               
+
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving product.");
             }
         }
@@ -92,45 +114,47 @@ namespace Praksa2.Controllers
                 return BadRequest(validationResult.Errors);
             }
             var userId = GetUserId();
+            var userName = GetUserName();
             var product = new Products
-            {
-                Name = dto.Name, 
-                Description = dto.Description,
-                Price = dto.Price,
-                OwnerId = userId
-            };
-            if (product == null)
-         {
-             return BadRequest();
-         }
-            var readDto = new ProductReadDto
             {
                 Name = dto.Name,
                 Description = dto.Description,
-                Price = dto.Price
+                Price = dto.Price,
+                OwnerId = userId,
+                CreatedByUser=userName
+                
             };
-          
+            if (product == null)
+            {
+                return BadRequest();
+            }
             try
             {
                 await productServices.AddProduct(product);
-                return CreatedAtAction(nameof(Get), new { id = product.Id },readDto);
+                var readDto = new ProductReadDto 
+                {
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    Price = dto.Price
+                };
+                return CreatedAtAction(nameof(Get), new { id = product.Id }, readDto);
             }
             catch (Exception ex)
             {
-              
+
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating product.");
             }
         }
         [HttpPost("assign-product")]
-        public IActionResult AssignProductToUser([FromBody] AssingProductDto dto)
+        public IActionResult AssignProductToUser(AssingProductDto dto)
         {
             productServices.AssignProductToUser(dto.UserId, dto.ProductId);
-            return Ok();
+            return Ok("Success");
         }
-            [HttpPut("{id}")]
-        public async Task<ActionResult> Put( int id, ProductUpdateDto dto)
+        [HttpPut("{id}")]
+        public async Task<ActionResult> Put(int id, ProductUpdateDto dto)
         {
-            
+
             var validator = new ProductUpdateDtoValidator();
             var validationResult = validator.Validate(dto);
 
@@ -138,27 +162,29 @@ namespace Praksa2.Controllers
             {
                 return BadRequest(validationResult.Errors);
             }
-            
-         
+            var userId = GetUserId();
+            var newProduct = new Products
+            {
+                Id = id,
+                Name = dto.Name,
+                Description = dto.Description,
+                Price = dto.Price,
+                OwnerId = userId
+            };
+            if (newProduct == null)
+            {
+                return BadRequest();
+            }
+            if (id != userId)
+            {
+                return Unauthorized("You do not have permission to update this product.");
+            }
             try
             {
-                var userId = GetUserId();
-                var newProduct = new Products
-                {
-                    Id = id,
-                    Name = dto.Name,
-                    Description = dto.Description,
-                    Price = dto.Price,
-                    OwnerId = userId
-                };
-                await productServices.UpdateProduct(id,newProduct,userId);
+                await productServices.UpdateProduct(id, newProduct, userId);
                 return Ok("Success");
             }
-            catch (InvalidOperationException ex)
-            {
-               
-                return NotFound(ex.Message);
-            }
+
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating product.");
@@ -166,14 +192,15 @@ namespace Praksa2.Controllers
         }
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
-        {try
-            { 
-                var userId = GetUserId();
-            var product = await productServices.GetProductById(id,userId);
-            if (product == null)
+        {
+            try
             {
-                return NotFound();
-            }
+                var userId = GetUserId();
+                var product = await productServices.GetProductById(id, userId);
+                if (product == null)
+                {
+                    return NotFound();
+                }
                 if (product.OwnerId != userId)
                 {
                     return Unauthorized("You do not have permission to delete this product.");
@@ -184,11 +211,66 @@ namespace Praksa2.Controllers
             }
             catch (Exception ex)
             {
-                
+
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the product.");
             }
 
         }
+        [HttpGet("info")]
+        public async Task<IActionResult> GetProductInfo()
+        {
+            try
+            {
+                var totalProductCountTask = productServices.GetTotalProductCountAsync();
+                var averagePriceTask = productServices.GetAveragePriceAsync();
+                var lowestPriceTask = productServices.GetLowestPriceAsync();
+                var highestPriceTask = productServices.GetHighestPriceAsync();
+                var totalAssignedProductsCountTask = productServices.GetTotalAssignedProductsCountAsync();
+
+
+                await Task.WhenAll(totalProductCountTask, averagePriceTask, lowestPriceTask, highestPriceTask, totalAssignedProductsCountTask);
+
+
+                var totalProductCount = await totalProductCountTask;
+                var averagePrice = await averagePriceTask;
+                var lowestPrice = await lowestPriceTask;
+                var highestPrice = await highestPriceTask;
+                var totalAssignedProductCount = await totalAssignedProductsCountTask;
+
+
+                var response = new ProductInfoResponse
+                {
+                    TotalProductCount = totalProductCount,
+                    AveragePrice = averagePrice,
+                    LowestPrice = lowestPrice,
+                    HighestPrice = highestPrice,
+                    TotalAssignedProductsCount = totalAssignedProductCount
+                };
+
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Došlo je do greške prilikom preuzimanja informacija o proizvodima.");
+            }
+        }
+        [HttpGet("top-popular")]
+        public async Task<IActionResult> GetTopPopularProducts([FromQuery] int? topCount)
+        {
+            try
+            {
+              
+                var popularProducts = await productServices.GetTopPopularProductsAsync(topCount);
+                return Ok(popularProducts);
+            }
+            catch (Exception ex)
+            {
+               
+                return StatusCode(StatusCodes.Status500InternalServerError, "Došlo je do greške prilikom preuzimanja informacija o najpopularnijim proizvodima.");
+            }
+        }
     }
 }
+
 

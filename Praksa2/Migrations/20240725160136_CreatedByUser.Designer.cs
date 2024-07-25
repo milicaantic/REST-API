@@ -10,8 +10,8 @@ using Praksa2.Data;
 namespace Praksa2.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240724073641_AddUserProductRelationship")]
-    partial class AddUserProductRelationship
+    [Migration("20240725160136_CreatedByUser")]
+    partial class CreatedByUser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -59,6 +59,10 @@ namespace Praksa2.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("CreatedByUser")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
@@ -69,11 +73,9 @@ namespace Praksa2.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Price")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OwnerId");
 
                     b.ToTable("Products");
                 });
@@ -95,17 +97,6 @@ namespace Praksa2.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Praksa2.Models.Products", b =>
-                {
-                    b.HasOne("DataAccessLayer.Models.User", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("DataAccessLayer.Models.User", b =>

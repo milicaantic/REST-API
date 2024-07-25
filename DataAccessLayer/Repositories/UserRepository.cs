@@ -9,22 +9,23 @@ namespace Praksa2.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly AppDbContext _context;
+        private readonly AppDbContext context;
 
         public UserRepository(AppDbContext context)
         {
-            _context = context;
+            this.context = context;
         }
 
         public async Task<User> GetUserByUsernameAsync(string username)
         {
-            return await _context.Users.SingleOrDefaultAsync(u => u.Username == username);
+            return await context.Users.SingleOrDefaultAsync(u => u.Username == username);
         }
 
         public async Task AddUserAsync(User user)
         {
-            await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
+            await context.Users.AddAsync(user);
+            await context.SaveChangesAsync();
         }
+
     }
 }

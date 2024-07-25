@@ -65,7 +65,7 @@ namespace Praksa2.Migrations
                     b.Property<int>("OwnerId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Price")
+                    b.Property<int>("Price")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

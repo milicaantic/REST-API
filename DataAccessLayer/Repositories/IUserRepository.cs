@@ -11,5 +11,6 @@ namespace DataAccessLayer.Repositories
     {
         Task<User> GetUserByUsernameAsync(string username);
         Task AddUserAsync(User user);
+
     }
 }

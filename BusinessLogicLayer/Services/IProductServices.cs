@@ -1,15 +1,22 @@
-﻿using Praksa2.Models;
+﻿using DataAccessLayer.Models;
+using Praksa2.Models;
 
 namespace Praksa2.Services
 {
     public interface IProductServices
     {
-        Task<IEnumerable<Products>> GetAllProducts();
+      //  Task<IEnumerable<Products>> GetAllProducts();
         IEnumerable<Products> GetUserProducts(int userId);
+        Task<int> GetTotalProductCountAsync();
         Task<Products> GetProductById(int id,int userId);
         Task AddProduct(Products product);
         void AssignProductToUser(int userId, int productId);
         Task UpdateProduct(int id, Products product,int userId);
         Task DeleteProduct(int id,int userId);
+        Task<int> GetAveragePriceAsync();
+        Task<int> GetLowestPriceAsync();
+        Task<int> GetHighestPriceAsync();
+        Task<int> GetTotalAssignedProductsCountAsync();
+        Task<List<ProductPopularity>> GetTopPopularProductsAsync(int? topCount = null);
     }
 }

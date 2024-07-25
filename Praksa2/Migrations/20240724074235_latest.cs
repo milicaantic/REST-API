@@ -32,7 +32,7 @@ namespace Praksa2.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: true),
                     Description = table.Column<string>(type: "TEXT", nullable: true),
-                    Price = table.Column<decimal>(type: "TEXT", nullable: false),
+                    Price = table.Column<int>(type: "TEXT", nullable: false),
                     OwnerId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>

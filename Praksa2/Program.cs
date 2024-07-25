@@ -14,6 +14,9 @@ using Microsoft.Identity.Client;
 using DataAccessLayer.Repositories;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Options;
+using DataAccessLayer.Models;
+using Microsoft.Extensions.Configuration;
+using FluentAssertions.Common;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,9 +26,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
-{ options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"),b => b.MigrationsAssembly("Praksa2")); });
+{ options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"), b => b.MigrationsAssembly("Praksa2")); });
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
 builder.Services.AddAuthentication(x =>
@@ -46,15 +50,15 @@ builder.Services.AddAuthentication(x =>
         ValidateAudience = false
     };
 });
+
 builder.Services.AddAuthorization();
-
-
-
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductServices, ProductServices>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddControllers();
-builder.Services.AddSwaggerGen(c => {
+
+builder.Services.AddSwaggerGen(c =>
+{
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "JWTToken_Auth_API",

@@ -12,6 +12,8 @@ using DataAccessLayer.Repositories;
 using BusinessLogicLayer.Dtos;
 using DataAccessLayer.Models;
 using BusinessLogicLayer.Services;
+using Praksa2.Validators;
+using BusinessLogicLayer.Validators;
 
 
 namespace Praksa2.Controllers
@@ -20,19 +22,26 @@ namespace Praksa2.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        private readonly IUserRepository _userRepository;
+        private readonly IConfiguration configuration;
+        private readonly IUserRepository userRepository;
 
         public AuthController(IConfiguration configuration, IUserRepository userRepository)
         {
-            _configuration = configuration;
-            _userRepository = userRepository;
+            this.configuration = configuration;
+            this.userRepository = userRepository;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] UserRegisterDto registerDto)
+        public async Task<IActionResult> Register(UserRegisterDto registerDto)
         {
-            if (await _userRepository.GetUserByUsernameAsync(registerDto.Username) != null)
+            var validator = new RegisterDtoValidator();
+            var validationResult = validator.Validate(registerDto);
+
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors);
+            }
+            if (await userRepository.GetUserByUsernameAsync(registerDto.Username) != null)
             {
                 return BadRequest("Username already exists.");
             }
@@ -43,7 +52,7 @@ namespace Praksa2.Controllers
                 PasswordHash = PasswordService.HashPassword(registerDto.Password)
             };
 
-            await _userRepository.AddUserAsync(user);
+            await userRepository.AddUserAsync(user);
 
             return Ok("User registered successfully.");
         }
@@ -51,7 +60,7 @@ namespace Praksa2.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDto loginDto)
         {
-            var user = await _userRepository.GetUserByUsernameAsync(loginDto.Username);
+            var user = await userRepository.GetUserByUsernameAsync(loginDto.Username);
 
             if (user == null || !PasswordService.VerifyPassword(user.PasswordHash, loginDto.Password))
             {
@@ -59,28 +68,23 @@ namespace Praksa2.Controllers
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]);
+            var key = Encoding.ASCII.GetBytes(configuration["Jwt:Key"]);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new(ClaimTypes.Name, user.Username), new("UserID", user.Id.ToString())
+                  //  new(ClaimTypes.Name, user.Username), 
+                    new Claim("Username", user.Username), 
+                    new("UserID", user.Id.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-                Issuer = _configuration["Jwt:Issuer"],
+                Issuer = configuration["Jwt:Issuer"],
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
-            
+
             return Ok(new { Token = tokenString });
         }
-
-        /*[HttpPost("logout")]
-        public IActionResult Logout()
-        {
-           
-            return Ok("Logged out successfully.");
-        }*/
     }
 }

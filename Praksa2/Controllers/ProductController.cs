@@ -9,6 +9,7 @@ using FluentValidation;
 
 using Praksa2.Services;
 using Microsoft.AspNetCore.Authorization;
+using BusinessLogicLayer.Dtos;
 
 namespace Praksa2.Controllers
 {
@@ -23,38 +24,49 @@ namespace Praksa2.Controllers
         {
             this.productServices = productServices;
         }
-        /*public ProductController(AppDbContext appDbContext)
-      {
-
-          this.appDbContext = appDbContext;
-      }*/
-        [HttpGet]
-         public async Task<ActionResult<IEnumerable<Products>>> Get()
+        private int GetUserId()
         {
-            try
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserID");
+
+            if (userIdClaim == null)
             {
-                var products = await productServices.GetAllProducts();
-                return Ok(products);
+                throw new Exception("UserID claim not found");
             }
+
+            if (int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return userId;
+            }
+            else
+            {
+                throw new Exception("Invalid UserID value");
+            }
+        }
+
+
+        [HttpGet("user-products")]
+        public IActionResult GetUserProducts()
+        {
+            try { 
+            var userId = GetUserId(); 
+            var products = productServices.GetUserProducts(userId);
+            return Ok(products);}
             catch (Exception ex)
             {
-             
+
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving products.");
             }
         }
-       /* public ActionResult<List<Products>> Get()
-        {
-            // Sinhrono dobijanje svih zaposlenih
-            var product = appDbContext.Products.ToList();
-            return Ok(product);
-        }*/
+
+       
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Products>> Get(int id)
         {
             try
             {
-                var product = await productServices.GetProductById(id);
+                var userId = GetUserId();
+                var product = await productServices.GetProductById(id,userId);
                 if (product == null)
                 {
                     return NotFound();
@@ -79,20 +91,29 @@ namespace Praksa2.Controllers
             {
                 return BadRequest(validationResult.Errors);
             }
+            var userId = GetUserId();
             var product = new Products
             {
-                Name = dto.Name,
+                Name = dto.Name, 
                 Description = dto.Description,
-                Price = dto.Price
+                Price = dto.Price,
+                OwnerId = userId
             };
             if (product == null)
          {
              return BadRequest();
          }
+            var readDto = new ProductReadDto
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Price = dto.Price
+            };
+          
             try
             {
                 await productServices.AddProduct(product);
-                return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
+                return CreatedAtAction(nameof(Get), new { id = product.Id },readDto);
             }
             catch (Exception ex)
             {
@@ -100,10 +121,16 @@ namespace Praksa2.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating product.");
             }
         }
-
-        [HttpPut("{id}")]
+        [HttpPost("assign-product")]
+        public IActionResult AssignProductToUser([FromBody] AssingProductDto dto)
+        {
+            productServices.AssignProductToUser(dto.UserId, dto.ProductId);
+            return Ok();
+        }
+            [HttpPut("{id}")]
         public async Task<ActionResult> Put( int id, ProductUpdateDto dto)
         {
+            
             var validator = new ProductUpdateDtoValidator();
             var validationResult = validator.Validate(dto);
 
@@ -111,18 +138,20 @@ namespace Praksa2.Controllers
             {
                 return BadRequest(validationResult.Errors);
             }
-           
-            var newProduct = new Products
-            {
-                Id=id,
-                Name = dto.Name,
-                Description = dto.Description,
-                Price = dto.Price
-            };
+            
          
             try
             {
-                await productServices.UpdateProduct(id,newProduct);
+                var userId = GetUserId();
+                var newProduct = new Products
+                {
+                    Id = id,
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    Price = dto.Price,
+                    OwnerId = userId
+                };
+                await productServices.UpdateProduct(id,newProduct,userId);
                 return Ok("Success");
             }
             catch (InvalidOperationException ex)
@@ -138,14 +167,19 @@ namespace Praksa2.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {try
-            {
-            var product = await productServices.GetProductById(id);
+            { 
+                var userId = GetUserId();
+            var product = await productServices.GetProductById(id,userId);
             if (product == null)
             {
                 return NotFound();
             }
-            
-                await productServices.DeleteProduct(id);
+                if (product.OwnerId != userId)
+                {
+                    return Unauthorized("You do not have permission to delete this product.");
+                }
+
+                await productServices.DeleteProduct(id, userId);
                 return Ok("Success");
             }
             catch (Exception ex)

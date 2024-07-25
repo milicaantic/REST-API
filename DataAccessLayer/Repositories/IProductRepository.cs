@@ -1,13 +1,18 @@
-﻿using Praksa2.Models;
+﻿using DataAccessLayer.Models;
+using Praksa2.Models;
 
 namespace Praksa2.Repositories
 {
     public interface IProductRepository
     {
         Task<IEnumerable<Products>> GetAllAsync();
-        Task<Products> GetByIdAsync(int id);
+        IEnumerable<Products> GetProductsByUserId(int userId);
+        Task<Products> GetByIdAsync(int id,int userId);
         Task AddAsync(Products product);
-        Task UpdateAsync(Products product);
-        Task DeleteAsync(int id);
+        Task AddUserProductAsync(UserProduct userProduct);
+        Task<int> SaveChangesAsync();
+        void AssignProductToUser(int userId, int productId);
+        Task<bool> UpdateAsync(int id,Products product,int userId);
+        Task DeleteAsync(int id,int userId);
     }
 }

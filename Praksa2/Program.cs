@@ -25,7 +25,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
-{ options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")); });
+{ options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"),b => b.MigrationsAssembly("Praksa2")); });
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
 builder.Services.AddAuthentication(x =>

@@ -64,7 +64,7 @@ namespace Praksa2.Controllers
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new(ClaimTypes.Name, user.Username)
+                    new(ClaimTypes.Name, user.Username), new("UserID", user.Id.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
@@ -72,15 +72,15 @@ namespace Praksa2.Controllers
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
-
+            
             return Ok(new { Token = tokenString });
         }
 
-        [HttpPost("logout")]
+        /*[HttpPost("logout")]
         public IActionResult Logout()
         {
            
             return Ok("Logged out successfully.");
-        }
+        }*/
     }
 }

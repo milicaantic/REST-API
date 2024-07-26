@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using BusinessLogicLayer.Dtos;
 using DataAccessLayer.Models;
 using Microsoft.Extensions.Options;
+using Praksa2.Migrations;
 
 namespace Praksa2.Controllers
 {
@@ -70,7 +71,19 @@ namespace Praksa2.Controllers
                 {
                     return StatusCode(StatusCodes.Status404NotFound, "Your products do not exist.");
                 }
-                return Ok(products);
+
+                var productDtos = products.Select(p => new ProductReadDto
+                {
+                   
+                    Name = p.Name,
+                    Description = p.Description,
+                    Price = p.Price,
+                    OwnerId=p.OwnerId,
+                    CreatedByUser=p.CreatedByUser
+
+                }).ToList();
+
+                return Ok(productDtos);
             }
             catch (Exception ex)
             {
@@ -175,7 +188,7 @@ namespace Praksa2.Controllers
             {
                 return BadRequest();
             }
-            if (id != userId)
+            if (newProduct.OwnerId != userId)
             {
                 return Unauthorized("You do not have permission to update this product.");
             }
@@ -246,13 +259,13 @@ namespace Praksa2.Controllers
                     HighestPrice = highestPrice,
                     TotalAssignedProductsCount = totalAssignedProductCount
                 };
-
+               
 
                 return Ok(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Došlo je do greške prilikom preuzimanja informacija o proizvodima.");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving product information.");
             }
         }
         [HttpGet("top-popular")]
@@ -262,12 +275,16 @@ namespace Praksa2.Controllers
             {
               
                 var popularProducts = await productServices.GetTopPopularProductsAsync(topCount);
+                if (popularProducts == null || !popularProducts.Any())
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Your products do not exist.");
+                }
                 return Ok(popularProducts);
             }
             catch (Exception ex)
             {
                
-                return StatusCode(StatusCodes.Status500InternalServerError, "Došlo je do greške prilikom preuzimanja informacija o najpopularnijim proizvodima.");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving product information.");
             }
         }
     }

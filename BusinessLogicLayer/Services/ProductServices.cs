@@ -41,12 +41,12 @@ namespace Praksa2.Services
             try
             {
                 await productRepository.AddAsync(product);
-                var userProduct = new UserProduct
+               /* var userProduct = new UserProduct
                 {
                     UserId = product.OwnerId,
                     ProductId = product.Id
                 };
-                await productRepository.AddUserProductAsync(userProduct);
+                await productRepository.AddUserProductAsync(userProduct);*/
             }
             catch (Exception ex)
             {

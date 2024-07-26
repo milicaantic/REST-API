@@ -11,6 +11,8 @@ namespace BusinessLogicLayer.Dtos
         public required string Name { get; set; }
         public required string Description { get; set; }
         public int Price { get; set; }
+        public int OwnerId { get; set; }
+        public string CreatedByUser { get; set; }
 
     }
 }

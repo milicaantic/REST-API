@@ -1,0 +1,71 @@
+Zadatak (ukratko)
+
+Core
+
+- Koristeći C# web api implementirati “product” REST API servis
+- Servis treba da ima standardne CRUD (GET, POST, PUT i DELETE) operacije 
+- Servis treba da ima dokumentaciju u vidu Swaggera
+- Koristiti “SQLite” i “EntityFramework“ za prezistovanje podataka
+
+
+BONUS
+
+- Validacija inputa (fluent validation)
+- Error handling
+- 3 layer architecture (sa fokusom na “interface segregation” princip)
+- Autentikacija, authorizacija i JWT
+
+
+Kao što smo naveli na prezentaciji oblazićemo vas s vremena na vreme, tako da ako imate neka pitanja, a nisu "blockeri" - da vas blokraju pri radu, možete ih zapisivati sa strane, pa kad budemo došli možemo diskutovati o tome.
+
+FYI, ako neko ima neka pitanja, (a nema hrabrosti da ih napiše ovde u grupu) možete slobodno koristi DM.
+Ono sto je bilo zamisljeno i kako se 3 layerd arhitektura najcesce implementira u .NET aplikacijama jeste uz pomoc ClassLibrary-ja koji odvajaju delove koda na osnovu cpecifichih funkcija istog.
+Shodno tome implementacija 3 layerd arhitekture u .NET-u se najcesce svodi na to da imate 3 layera (odnosno 3 projekta, 2 tipa ClassLibrary i 1 tipa WebApi koji vec imate) i to na sledeci nacin:
+ - DataLayer (ili DataAccessLayer ili skraceno DAL) je projekat tipa ClassLibrary koji ima ulogu da komunicira sa bazom i sadrzi svu potrebnu logiku za to. U ovom projektu se nalaze vasi modeli, kao i DbContext i migracije koje
+ omogucavaju komunikaciju sa bazom. Takodje u ovom projektu se nalaze interfejsi Repozitorijuma i njihova implementacija. Repozitorijumi treba da sadrze svu logiku za dobavljanje i izmenu, cuvanje i brisanje podataka u bazi.
+ - BusinessLayer( ili  BusinessLogicLayer ili skraceno BALL) je projekat tipa ClassLibrary koji sadrzi svu logiku vase aplikacije. Sta to znaci? To znaci da je ovaj layer zaduzen da dobavi trazene podatke iz baze,
+ izvrsii sve potrebne kalkulacije i dodatnu logiku, prebaci model u DTO objekte i to vrati layeru iznad njega. U ovom projektu se nalaze interfejsi i implementacija vasih Servisa, Validatori i DTO objekti. 
+ Servisi komuniciraju sa bazom preko interfejsa Repozitorijuma, prebacuju te podataka u DTO i vracaju ih nivou iznad. Ovaj projekat treba da ima u project reference DataLayer projekat ( odnosno da ga referencira).
+ - PresentationLayer( ili samo WebApi, ili kako god ste nazvali vas WebApi projekat) je projekat tipa WebApi. Ovaj projekat je ulazna tacka za nasu aplikaciju. On sadrzi Kontrolere sa vasim HTTP metodama, i potrebne konfiguracie
+kao sto zahteva JWT token. Ovaj projekat (njegovi kontorleri) treba da komunicira sa BusinessLayer preko Servisa odnosno njihovih interfejsa, treba da prima DTO kao ulazni parametar, to prolsedi servisu, od servisa dobije DTO koji vraca u spoljni svet.
+Primer: Vasa POST metoda u kontroleru treba da prima DTO, da odradi validaciju DTO-a, ako validacija prodje da pozove Create (ili ako je neko nazvao Add) metodu iz servisa (ali interfejsa). Servis ce da pretvodi DTO u pravi model, da izvrsi cuvanje
+tog modela u bazu, prebaci sacuvani model u DTO, i vrati ga kontoleru. Kontroler dobija taj DTO i vraca ga u sponji svet. PresentationLayer ima reference na oba prethodna projekta s tim da referencu na DataLayer koristi samo 
+radi registrovanja konteksta i Interfejsa odnosno DependencyInjection-a. Sva komunikacija PresentationLayer(WebApi) treba iskljucivo da bude sa BusinessLayer preko Servisa tj njihovih interfejsa. 
+Na ovom linku mozete videti kako se implementira 3 layerd arhitektura, a tu smo i mi za sva dodatna pitanja: 
+https://www.youtube.com/watch?v=Zpq21ErM4ZA
+Ko je zavrsio 3 layerd arhitekturu i JWT na osnovu datih primera, moze da napise unit testove za metode iz servisa. U prilog vam saljem materijale koji ce vam pomoci u tome.
+https://www.dandoescode.com/blog/xunit-unit-testing/part-one
+https://www.dandoescode.com/blog/xunit-unit-testing/part-two
+Nakon što ste završili sve zadatke sa liste iz prethodnog zadatka, potrebno je implementirati vezu više-na-više, gde svaki korisnik može imati više proizvoda, a svaki proizvod može sadržati više korisnika.
+
+Specifikacije:
+
+Veza više-na-više: Kreirati tabelu za povezivanje korisnika i proizvoda. Svaki korisnik može imati više proizvoda, a svaki proizvod može imati više korisnika.
+
+Brisanje proizvoda: Korisnik koji je dodao proizvod (owner) može samo da obriše taj proizvod. Ovo znači da samo korisnik koji je kreirao proizvod može izvršiti operaciju brisanja.
+
+Dodeljivanje proizvoda: Proizvodi mogu biti dodeljeni drugim korisnicima. Ova funkcionalnost omogućava da jedan proizvod bude povezan sa više korisnika.
+
+Izlistavanje proizvoda: API za izlistavanje proizvoda treba da vraća samo proizvode koji su dodeljeni određenom korisniku. To znači da kada korisnik zatraži listu proizvoda, dobiće samo proizvode koji su dodeljeni njemu.
+Za one koji su zavrsili i extra bonus zadatak spremili smo jos malo stvari za razmisljanje i igranje :D 
+- Implementirati endpoint koji vraća osnovne statistike o proizvodima. Enpoint treba da vrati sledece relevantne informicje:
+	- Ukupan broj proizvoda u sistemu.
+	- Prosecnu cena svih proizvoda.
+	- Najnizu cenu proizvoda
+	- Najvisu cenu proizvoda.
+	- Ukupan broj dodeljenih proizvoda, odnosno ukupan broj veza između proizvoda i korisnika, tj. koliko puta su proizvodi dodeljeni korisnicima.
+
+- Implementirati endpoint koji vraća listu najpopularnijih proizvoda(proizvode koji imaju najvise dodela korisnicima). Proizvodi treba da budu sortirani po broju dodela u opadajucem redosledu (prvi u listi treba da bude onaj sa najvise dodela, i da se ide ka proizvodima sa najmanje dodela)
+Takodje iz ove liste treba iskljuciti proizvode koji nemaju nijednu dodelu(jer to znaci da nisu popularni) 
+Enpoint kao parametar prima broj koliko najpopularnijih proizvoda zelimo da prikazemo(top 5 najpopularnijih, top 10, top 15...). 
+Ovaj parametar treba da bude opcioni i ukoliko se ne prosledi, API treba da ima definisan default-an broj u konfiguraciji koliko proizvoda ce da vrati u listi. 
+i treba da vrati sledece relevantne informicje o najpopularnijim proizvodima proizvodima:
+	- Id proizvoda.
+	- Naziv proizvoda.
+	- Informaciju koliko puta je proizvod bio dodeljen različitim korisnicima.
+	- Ime korisnika koji je kreirao proizvod.
+
+
+
+
+

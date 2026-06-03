@@ -49,7 +49,7 @@ namespace Praksa2.Repositories
             await appDbContext.SaveChangesAsync();
         }
 
-        public async void AssignProductToUser(int userId, int productId)
+        public async Task AssignProductToUser(int userId, int productId)
         {
             var userProduct = new UserProduct
             {

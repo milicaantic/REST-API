@@ -56,10 +56,10 @@ namespace Praksa2.Services
         }
 
 
-        public void AssignProductToUser(int userId, int productId)
+        public async Task AssignProductToUser(int userId, int productId)
         {
 
-            productRepository.AssignProductToUser(userId, productId);
+           await  productRepository.AssignProductToUser(userId, productId);
         }
         public async Task UpdateProduct(int id, Products newProduct, int userId)
         {

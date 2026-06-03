@@ -12,7 +12,7 @@ namespace Praksa2.Repositories
         Task AddUserProductAsync(UserProduct userProduct);
         
         Task<int> GetTotalProductCountAsync();
-        void AssignProductToUser(int userId, int productId);
+        Task AssignProductToUser(int userId, int productId);
         Task<bool> UpdateAsync(int id,Products product,int userId);
         Task DeleteAsync(int id,int userId);
         Task<int> GetAveragePriceAsync();

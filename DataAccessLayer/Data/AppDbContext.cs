@@ -20,11 +20,10 @@ namespace Praksa2.Data
             modelBuilder.Entity<UserProduct>()
                 .HasKey(up => new { up.UserId, up.ProductId });
 
-            modelBuilder.Entity<UserProduct>()
+           modelBuilder.Entity<UserProduct>()
                 .HasOne(up => up.User)
                 .WithMany(u => u.UserProducts)
                 .HasForeignKey(up => up.UserId);
-
             modelBuilder.Entity<UserProduct>()
                 .HasOne(up => up.Product)
                 .WithMany(p => p.UserProducts)

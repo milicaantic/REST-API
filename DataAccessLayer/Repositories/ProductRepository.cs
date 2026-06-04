@@ -34,6 +34,8 @@ namespace Praksa2.Repositories
         public async Task<Products> GetByIdAsync(int id, int userId)
         {
             return await appDbContext.Products
+                .Include(p => p.UserProducts)
+                 .ThenInclude(up => up.User)
                  .Where(p => p.Id == id && p.OwnerId == userId)
                  .FirstOrDefaultAsync();
         }

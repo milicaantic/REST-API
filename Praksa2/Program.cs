@@ -17,6 +17,7 @@ using Microsoft.Extensions.Options;
 using DataAccessLayer.Models;
 using Microsoft.Extensions.Configuration;
 using FluentAssertions.Common;
+using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,7 +56,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductServices, ProductServices>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(opts =>
+{
+    opts.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
 
 builder.Services.AddSwaggerGen(c =>
 {
